@@ -1,0 +1,112 @@
+name: odroid-xu4
+version: 18-0.1
+summary: Odroid XU4
+description: |
+ Bootloader files and partitoning data to create a
+ bootable Ubuntu Core 18 image for the Hardkernel
+ Odroid-XU4
+type: gadget
+base: core18
+architectures:
+  - build-on: amd64
+    run-on: armhf
+confinement: strict
+grade: stable
+
+parts:
+  uboot:
+    plugin: make
+    source: https://github.com/hardkernel/u-boot.git
+    source-branch: odroidxu4-v2017.05
+    override-build: |
+      # apply Ubuntu Core patch
+      # git apply -v ../../../uboot.patch
+      # build u-boot
+      make odroid-xu4_defconfig
+      CROSS_COMPILE=arm-linux-gnueabihf- make
+      cp u-boot-dtb.bin $SNAPCRAFT_PART_INSTALL/
+
+      # copy blobs in place (geez, samsung, your bl1.bin is larger than
+      # the space you allocate for it in the sd_fuse.sh script ...
+      # (we correct that with the awful dd call below since ubuntu-image
+      # will actually check the filesize before writing to the image))
+      dd if=sd_fuse/bl1.bin.hardkernel of=$SNAPCRAFT_PART_INSTALL/bl1.bin.hardkernel count=30
+      cp sd_fuse/bl2.bin.hardkernel.720k_uboot $SNAPCRAFT_PART_INSTALL/
+      cp sd_fuse/tzsw.bin.hardkernel $SNAPCRAFT_PART_INSTALL/
+
+      # create default environment
+      tools/mkenvimage -r -s 131072 -o $SNAPCRAFT_PART_INSTALL/uboot.env ../../../uboot.env.in
+      cd $SNAPCRAFT_PART_INSTALL/; ln -s uboot.env uboot.conf
+    build-packages:
+      - device-tree-compiler
+      - libpython2.7-dev
+      - build-essential
+      - bc
+      - on amd64:
+        - gcc-arm-linux-gnueabihf
+
+slots:
+  gpio-20:
+    interface: gpio
+    number: 20
+  gpio-26:
+    interface: gpio
+    number: 26
+  gpio-27:
+    interface: gpio
+    number: 27
+  gpio-44:
+    interface: gpio
+    number: 44
+  gpio-45:
+    interface: gpio
+    number: 45
+  gpio-46:
+    interface: gpio
+    number: 46
+  gpio-47:
+    interface: gpio
+    number: 47
+  gpio-48:
+    interface: gpio
+    number: 48
+  gpio-49:
+    interface: gpio
+    number: 49
+  gpio-60:
+    interface: gpio
+    number: 60
+  gpio-61:
+    interface: gpio
+    number: 61
+  gpio-65:
+    interface: gpio
+    number: 65
+  gpio-66:
+    interface: gpio
+    number: 66
+  gpio-67:
+    interface: gpio
+    number: 67
+  gpio-68:
+    interface: gpio
+    number: 68
+  gpio-69:
+    interface: gpio
+    number: 69
+  gpio-112:
+    interface: gpio
+    number: 112
+  gpio-115:
+    interface: gpio
+    number: 115
+  gpio-117:
+    interface: gpio
+    number: 117
+  i2c-0:
+    interface: i2c
+    path: /dev/i2c-0
+  i2c-1:
+    interface: i2c
+    path: /dev/i2c-1
+
